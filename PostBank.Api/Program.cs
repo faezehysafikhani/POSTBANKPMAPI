@@ -84,8 +84,11 @@ using Nexus.Workflow;
 using Nexus.Workflow.Endpoints;
 using Nexus.Workflow.Infrastructure;
 using NexusCore.Application;
+using NexusCore.Application.Common;
 using NexusCore.Application.Endpoints;
 using NexusCore.Application.Identity.Permissions;
+using NexusCore.Application.Security;
+using NexusCore.Application.Security.RateLimiting;
 using NexusCore.Infrastructure;
 using NexusCore.Infrastructure.Identity;
 using NexusCore.Infrastructure.Persistence;
@@ -168,6 +171,11 @@ builder.Services.AddEventsInfrastructure(builder.Configuration);
 builder.Services.AddTicketingInfrastructure(builder.Configuration);
 builder.Services.AddNotificationInfrastructure(builder.Configuration);
 
+// Security shared by every NexusCore host: rate limits, the real client address behind a proxy, request size limits.
+builder.Services.AddNexusCoreRateLimiting(builder.Configuration);
+builder.Services.AddNexusCoreForwardedHeaders(builder.Configuration);
+builder.Services.AddNexusCoreRequestLimits();
+
 builder.Services.AddOrganizationInfrastructure(builder.Configuration);
 builder.Services.AddCalendarInfrastructure(builder.Configuration);
 builder.Services.AddWorkflowInfrastructure(builder.Configuration);
@@ -226,6 +234,12 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
+if (!builder.Environment.IsDevelopment())
+{
+    // Refuses the development placeholder key and weak settings anywhere but Development.
+    jwtOptions.EnsureSafeForProduction();
+}
+
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -270,13 +284,48 @@ builder.Services.AddAuthorization(options =>
     }
 });
 
+// Allowed origins live in configuration (Cors:AllowedOrigins), so a deployment can point the UI at another
+// host without a rebuild. With none configured no cross-origin call is allowed.
+var corsAllowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll",
-        policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+    options.AddPolicy("FrontendPolicy", policy =>
+    {
+        if (corsAllowedOrigins.Length > 0)
+        {
+            policy.WithOrigins(corsAllowedOrigins).AllowAnyMethod().AllowAnyHeader();
+        }
+    });
 });
 
 var app = builder.Build();
+
+// Behind a reverse proxy: the real client address, believed only from the configured proxies.
+app.UseNexusCoreForwardedHeaders();
+
+// Unexpected exceptions: logged here, answered with a Persian message and no internals.
+app.UseSafeErrorResponses();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+}
+
+// Tokens, sessions and one-time codes must not be kept by browsers or proxies.
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/api/identity"))
+    {
+        context.Response.OnStarting(() =>
+        {
+            context.Response.Headers["Cache-Control"] = "no-store";
+            context.Response.Headers["Pragma"] = "no-cache";
+            return Task.CompletedTask;
+        });
+    }
+
+    await next();
+});
 
 if (app.Environment.IsDevelopment())
 {
@@ -285,9 +334,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors("AllowAll");
+app.UseCors("FrontendPolicy");
 app.UseSerilogRequestLogging();
 app.UseAuthentication();
+app.UseNexusCoreRateLimiting();
 app.UseAuthorization();
 
 app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
@@ -296,10 +346,13 @@ app.MapChatEndpoints();
 app.MapTicketEndpoints();
 app.MapNotificationEndpoints();
 app.MapEventEndpoints();
-app.MapHub<ChatHub>("/hubs/chat");
-app.MapHub<NotificationHub>("/hubs/notifications");
+app.MapHub<ChatHub>("/hubs/chat", options => options.CloseOnAuthenticationExpiration = true)
+    .RequireRateLimiting(NexusRateLimitPolicies.Realtime);
+app.MapHub<NotificationHub>("/hubs/notifications", options => options.CloseOnAuthenticationExpiration = true)
+    .RequireRateLimiting(NexusRateLimitPolicies.Realtime);
 
 app.MapIdentityEndpoints();
+app.MapSecurityReportEndpoints();
 if (builder.Configuration.IsUserGroupFeatureEnabled())
 {
     app.MapUserGroupEndpoints();

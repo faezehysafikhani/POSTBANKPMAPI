@@ -18,7 +18,7 @@ In a reviewed checkout of `nexuscore-taskmanagement`:
 pwsh ./eng/pack-core-modules.ps1 -Configuration Release -Version 0.1.0 -Output artifacts/packages
 ```
 
-The script prints the package version (for example `0.1.0.1405081301`: base version, Persian date, daily build number).
+The script prints the package version (for example `0.1.0.1405081302`: base version, Persian date, daily build number).
 
 ## 2. Build the offline feed (on a machine that can reach nuget.org)
 
@@ -34,7 +34,7 @@ pwsh ./eng/make-offline-feed.ps1 -CorePackages ../nexuscore-taskmanagement/artif
 Result: `offline-feed/` with all `.nupkg` files and a `SHA256SUMS` list (record it in the release ticket).
 
 The Core version the host uses is `NexusCoreVersion` in `PostBank.Api/PostBank.Api.csproj`; set it to the version
-printed in step 1 (it is `0.1.0.1405081301` now).
+printed in step 1 (it is `0.1.0.1405081302` now).
 
 ## 3. Install on the offline machine
 

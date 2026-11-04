@@ -1,0 +1,13 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+# The offline feed holds proprietary NexusCore packages and third-party packages: distribute it as an
+# artifact (release share / internal repository), never commit it.
+offline-feed/
+*.nupkg
+*.snupkg
+artifacts/
+appsettings.Production.json
+appsettings.Local.json

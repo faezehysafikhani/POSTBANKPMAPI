@@ -62,3 +62,25 @@ Seeded roles do not receive permissions added after they were first created: gra
 1. Build new packages (step 1) and a new offline feed (step 2).
 2. Change `NexusCoreVersion`.
 3. Restore, build, deploy. Never overwrite a published package version; publish a new one.
+
+## TMPB settings / organization structure
+
+This host now registers `Nexus.OrgStructure` application services, infrastructure, permission catalog,
+`/api/org-structure` endpoints (including OrgNode endpoints), and initial schema creation alongside the
+organization module. The implementation comes from Core branch `feature/1405-08-07-orgNode`, reviewed
+at commit `9f74c04aec1f43971369f2ee888c98d9d4af23df`. No Core business logic is duplicated in this host.
+
+Before deployment, package that Core revision as a **new release**, set `NexusCoreVersion` to the version
+actually produced, and rebuild the offline feed. The currently pinned version is retained because no
+new package release/feed was supplied with this change; availability and compatibility of the existing
+feed have not been verified. Both `Nexus.OrgStructure` and `Nexus.OrgStructure.Infrastructure` must be
+present, along with matching foundation packages.
+
+For an existing database, apply the OrgStructure migrations/schema upgrades from that Core release
+through the normal deployment process. `SeedOnStartup` is intended for initial setup, not upgrades.
+Grant the module's organization/node permissions to the appropriate roles: installing the module does
+not automatically broaden existing users' grants. Verify a permitted user and a denied user, and test
+company/node creation, placement, links, movement/merge previews, and history against SQL Server.
+
+Validation of this change is limited to source registration checks. This workspace has no .NET SDK,
+SQL Server or offline NuGet feed, so API restore/build/database and end-to-end checks remain pending.

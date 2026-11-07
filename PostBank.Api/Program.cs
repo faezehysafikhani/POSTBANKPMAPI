@@ -28,6 +28,9 @@ using Nexus.Integrations.StrategyAlignment.Infrastructure;
 using Nexus.Knowledge;
 using Nexus.Knowledge.Endpoints;
 using Nexus.Knowledge.Infrastructure;
+using Nexus.OrgStructure;
+using Nexus.OrgStructure.Endpoints;
+using Nexus.OrgStructure.Infrastructure;
 using Nexus.Organization;
 using Nexus.Organization.Endpoints;
 using Nexus.Organization.Infrastructure;
@@ -119,6 +122,7 @@ builder.Services.AddTicketingApplication();
 builder.Services.AddNotificationApplication();
 
 builder.Services.AddOrganizationApplication();
+builder.Services.AddOrgStructure();
 builder.Services.AddCalendarApplication(options => options.SingleDefaultPerTenant = true);
 builder.Services.AddIranianOfficialHolidays();
 builder.Services.AddWorkflowApplication(o => o.RequireDesignatedApprover = true);
@@ -177,6 +181,7 @@ builder.Services.AddNexusCoreForwardedHeaders(builder.Configuration);
 builder.Services.AddNexusCoreRequestLimits();
 
 builder.Services.AddOrganizationInfrastructure(builder.Configuration);
+builder.Services.AddOrgStructureInfrastructure(builder.Configuration);
 builder.Services.AddCalendarInfrastructure(builder.Configuration);
 builder.Services.AddWorkflowInfrastructure(builder.Configuration);
 builder.Services.AddActionManagementInfrastructure(builder.Configuration);
@@ -359,6 +364,7 @@ if (builder.Configuration.IsUserGroupFeatureEnabled())
 }
 
 app.MapOrganizationEndpoints();
+app.MapOrgStructureEndpoints();
 app.MapCalendarEndpoints();
 app.MapWorkflowEndpoints();
 app.MapActionEndpoints();
@@ -401,6 +407,7 @@ if (builder.Configuration.GetValue("Database:SeedOnStartup", true))
     await services.GetRequiredService<DefaultDataSeeder>().SeedAsync(cancellationToken);
 
     await ModuleSchemaInitializer.EnsureCreatedAsync(services.GetRequiredService<OrganizationDbContext>(), cancellationToken);
+    await ModuleSchemaInitializer.EnsureCreatedAsync(services.GetRequiredService<OrgStructureDbContext>(), cancellationToken);
     await ModuleSchemaInitializer.EnsureCreatedAsync(services.GetRequiredService<CalendarDbContext>(), cancellationToken);
     await ModuleSchemaInitializer.EnsureCreatedAsync(services.GetRequiredService<WorkflowDbContext>(), cancellationToken);
     await ModuleSchemaInitializer.EnsureCreatedAsync(services.GetRequiredService<ActionsDbContext>(), cancellationToken);

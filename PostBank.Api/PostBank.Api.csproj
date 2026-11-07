@@ -6,95 +6,24 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>postbank-api</UserSecretsId>
     <!-- One place to move the host to another Core release. Must exist in the offline feed. -->
-    <NexusCoreVersion>0.1.0.1405081302</NexusCoreVersion>
+    <NexusCoreVersion>0.1.0.1405082001</NexusCoreVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.12" />
-    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.7.1" />
     <PackageReference Include="Serilog.AspNetCore" Version="8.0.3" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.7.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0" />
   </ItemGroup>
 
-  <!-- PostBank consumes the NexusCore platform as NuGet packages (restored from the offline feed, see
-       nuget.config): the foundation plus the reusable modules this product chooses to compose.
-       Trimming the host is a matter of deleting the matching PackageReference/AddXxx()/MapXxxEndpoints()
-       lines; nothing here is load-bearing for any other application host. -->
+  <!-- PostBank consumes the NexusCore platform as two bundle packages. Each brings the modules it composes
+       (with their versions) transitively, so there is nothing else to list or keep in step:
+         Nexus.Bundles.Platform           users, roles, sessions, organization, calendar, workflow,
+                                          chat, events, ticketing, notifications
+         Nexus.Bundles.ProjectManagement  every project-management module, its integrations, portfolio,
+                                          reporting, plus actions, knowledge and strategy
+       To use less, reference the individual Core packages instead of the bundle. -->
   <ItemGroup>
-    <!-- NexusCore foundation -->
-    <PackageReference Include="Chat.Api" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Chat.Application" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Chat.Infrastructure" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Events.Api" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Events.Application" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Events.Infrastructure" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="NexusCore.Application" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="NexusCore.Infrastructure" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="NexusCore.SharedKernel" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Notifications.Api" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Notifications.Application" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Notifications.Infrastructure" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Ticketing.Api" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Ticketing.Application" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Ticketing.Infrastructure" Version="$(NexusCoreVersion)" />
-
-    <!-- Reusable platform capabilities (not ProjectManagement-specific) -->
-    <PackageReference Include="Nexus.Organization" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.Organization.Infrastructure" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.Calendar" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.Calendar.Infrastructure" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.Calendar.IranianHolidays" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.Workflow" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.Workflow.Infrastructure" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.Actions" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.Actions.Infrastructure" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.Knowledge" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.Knowledge.Infrastructure" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.Strategy" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.Strategy.Infrastructure" Version="$(NexusCoreVersion)" />
-
-    <!-- Project Management: Core + every independently-registerable capability -->
-    <PackageReference Include="Nexus.ProjectManagement.Core" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.ProjectManagement.Core.Infrastructure" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.ProjectManagement.Waterfall" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.ProjectManagement.Waterfall.Infrastructure" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.ProjectManagement.Agile" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.ProjectManagement.Agile.Infrastructure" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.ProjectManagement.Team" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.ProjectManagement.Team.Infrastructure" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.ProjectManagement.Deliverables" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.ProjectManagement.Deliverables.Infrastructure" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.ProjectManagement.Kpi" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.ProjectManagement.Kpi.Infrastructure" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.ProjectManagement.Risk" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.ProjectManagement.Risk.Infrastructure" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.ProjectManagement.Stakeholder" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.ProjectManagement.Stakeholder.Infrastructure" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.ProjectManagement.Progress" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.ProjectManagement.Progress.Infrastructure" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.ProjectManagement.Contracts" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.ProjectManagement.Contracts.Infrastructure" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.ProjectManagement.History" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.ProjectManagement.History.Infrastructure" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.ProjectManagement.Documents" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.ProjectManagement.Documents.Infrastructure" Version="$(NexusCoreVersion)" />
-
-    <!-- Integrations (Project family x Workflow / Strategy) -->
-    <PackageReference Include="Nexus.Integrations.ProjectCalendar" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.Integrations.ProjectVisibility" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.Integrations.ProjectGovernance" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.ProjectManagement.Delegation" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.ProjectManagement.Delegation.Infrastructure" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.Integrations.ProjectDeletion" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.Integrations.ProjectWorkflow" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.Integrations.ProjectStrategyAlignment" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.Integrations.ProjectStrategyAlignment.Infrastructure" Version="$(NexusCoreVersion)" />
-
-    <!-- Read/orchestration -->
-    <PackageReference Include="Nexus.Portfolio" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.Reporting" Version="$(NexusCoreVersion)" />
-    <PackageReference Include="Nexus.Reporting.Analytics" Version="$(NexusCoreVersion)" />
+    <PackageReference Include="Nexus.Bundles.Platform" Version="$(NexusCoreVersion)" />
+    <PackageReference Include="Nexus.Bundles.ProjectManagement" Version="$(NexusCoreVersion)" />
   </ItemGroup>
 
 </Project>

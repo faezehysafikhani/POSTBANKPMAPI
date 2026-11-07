@@ -40,6 +40,8 @@
     <PackageReference Include="Ticketing.Infrastructure" Version="$(NexusCoreVersion)" />
 
     <!-- Reusable platform capabilities (not ProjectManagement-specific) -->
+    <PackageReference Include="Nexus.OrgStructure" Version="$(NexusCoreVersion)" />
+    <PackageReference Include="Nexus.OrgStructure.Infrastructure" Version="$(NexusCoreVersion)" />
     <PackageReference Include="Nexus.Organization" Version="$(NexusCoreVersion)" />
     <PackageReference Include="Nexus.Organization.Infrastructure" Version="$(NexusCoreVersion)" />
     <PackageReference Include="Nexus.Calendar" Version="$(NexusCoreVersion)" />

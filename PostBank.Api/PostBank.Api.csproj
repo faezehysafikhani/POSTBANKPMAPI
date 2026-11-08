@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>postbank-api</UserSecretsId>
     <!-- One place to move the host to another Core release. Must exist in the offline feed. -->
-    <NexusCoreVersion>0.1.0.1405082003</NexusCoreVersion>
+    <NexusCoreVersion>0.1.0.1405082005</NexusCoreVersion>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.OpenApi.Models;
 using Nexus.Bundles;
 using Serilog;
@@ -6,6 +7,23 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseSerilog((context, configuration) =>
     configuration.ReadFrom.Configuration(context.Configuration).WriteTo.Console());
+
+// The keys that encrypt stored secrets (SMS panel key, LDAP password) live in a folder the operator backs up;
+// without it they stay in the app pool's profile and are lost with a new server or pool.
+var keysPath = builder.Configuration["DataProtection:KeysPath"];
+if (!string.IsNullOrWhiteSpace(keysPath))
+{
+    builder.Services.AddDataProtection()
+        .PersistKeysToFileSystem(new DirectoryInfo(keysPath))
+        .SetApplicationName("PostBank.Api");
+}
+
+// A real deployment must not run with the development signing key or a short one.
+var signingKey = builder.Configuration["Jwt:SigningKey"] ?? "";
+if (!builder.Environment.IsDevelopment() && (signingKey.Length < 32 || signingKey.StartsWith("replace-this", StringComparison.OrdinalIgnoreCase)))
+{
+    throw new InvalidOperationException("Jwt:SigningKey must be set (environment variable Jwt__SigningKey, at least 32 characters) outside development.");
+}
 
 // --- NexusCore: the platform, then the project-management capability set. ---
 builder.Services.AddNexusPlatform(builder.Configuration, builder.Environment);
@@ -73,11 +91,42 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseSerilogRequestLogging();
+
+// The UI is served from this same site (wwwroot): one address for pages and /api, so no CORS and the session cookie works.
+var serveUi = File.Exists(Path.Combine(app.Environment.WebRootPath ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot"), "index.html"));
+if (serveUi)
+{
+    app.Use(async (context, next) =>
+    {
+        var headers = context.Response.Headers;
+        headers["X-Content-Type-Options"] = "nosniff";
+        headers["X-Frame-Options"] = "DENY";
+        headers["Referrer-Policy"] = "same-origin";
+        headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+        if (!context.Request.Path.StartsWithSegments("/api") && !context.Request.Path.StartsWithSegments("/hubs"))
+        {
+            headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ws: wss:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
+        }
+        if (context.Request.IsHttps) headers["Strict-Transport-Security"] = "max-age=31536000";
+        await next();
+    });
+    app.UseDefaultFiles();
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        // The settings file is edited on the server: never cached; source maps are never served.
+        OnPrepareResponse = ctx =>
+        {
+            if (ctx.File.Name == "runtime-config.json" || ctx.File.Name == "index.html") ctx.Context.Response.Headers["Cache-Control"] = "no-store";
+        }
+    });
+}
+
 app.UseNexusPlatform();
 
-app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
+if (!serveUi) app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
 app.MapNexusPlatform();
 app.MapNexusProjectManagement();
+if (serveUi) app.MapFallbackToFile("index.html");
 
 // Seed and schema (Database:SeedOnStartup). Chat's additive schema patch runs regardless of it.
 await app.InitializeNexusPlatformAsync();
